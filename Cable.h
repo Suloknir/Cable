@@ -130,8 +130,9 @@ int print_table( //
         max_width = max_width >= (size_t)data_max_width ? max_width : data_max_width;
         column_widths[i] = max_width;
     }
-    // for (size_t i = 0; i < c; i++)
-    // printf("|%*s", (int)column_widths[i], headers[i]);
+    for (size_t i = 0; i < c; i++)
+        if (strlen(headers[i]) > MAX_COLUMN_WIDTH)
+            fprintf(stderr, "Cable WARN: Header '%s' exceeds max column width = %d\n", headers[i], MAX_COLUMN_WIDTH);
     for (size_t i = 0; i < c; i++)
     {
         putchar('|');
