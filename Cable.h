@@ -116,8 +116,10 @@ int print_table( //
         max_width = max_width >= (size_t)data_max_width ? max_width : data_max_width;
         column_widths[i] = max_width;
     }
-    // todo: print headers
-
+    for (size_t i = 0; i < c; i++)
+        printf("|%*s", (int)column_widths[i], headers[i]);
+    printf("|\n");
+    
     for (size_t row = 0; row < r; row++)
     {
         for (size_t col = 0; col < c; col++)
