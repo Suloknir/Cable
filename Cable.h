@@ -2,11 +2,13 @@
 #define CABLE_H
 
 // todo: fprint_table() that allows to print to a given stream
-// todo: allow data to be a string
-// todo: macro for debugging that allows to show/hide error and/or warn messages
+// todo: add printf-like data_format format
+// todo: change print_table to variadic function and remove 'void **data' parameter
+// todo: add string data_type
+// todo: create macro for debugging that allows to show/hide error and/or warn messages
 //  (maybe one macro for errors and one macro for warnings)
 
-#define MAX_COLUMN_WIDTH 128
+#define MAX_COLUMN_WIDTH 12
 
 #include <stddef.h>
 #include <stdio.h>
@@ -17,30 +19,32 @@
 // on error returns value < 0
 static ssize_t get_max_col_width(size_t n, char data_type, const void *data)
 {
-    char buffer[MAX_COLUMN_WIDTH];
+    static char buffer[MAX_COLUMN_WIDTH + 1];
     size_t max_width = 0;
     for (size_t i = 0; i < n; i++)
     {
         int str_length;
-        // todo: other data_types
         switch (data_type)
         {
             case 'd':
-                str_length = snprintf(buffer, MAX_COLUMN_WIDTH, "%d", ((int *)data)[i]);
+                str_length = snprintf(buffer, MAX_COLUMN_WIDTH + 1, "%d", ((int *)data)[i]);
                 if (str_length >= MAX_COLUMN_WIDTH)
                 {
-                    fprintf(stderr, "Cable WARN: Data in row exceeded max column width = %zu\n", i + 1);
-                    str_length = MAX_COLUMN_WIDTH - 1;
+                    fprintf(stderr,
+                        "Cable WARN: Data in row %zu exceeded max column width = %d\n",
+                        i + 1,
+                        MAX_COLUMN_WIDTH);
+                    // str_length = MAX_COLUMN_WIDTH - 1;
                 }
                 max_width = max_width >= (size_t)str_length ? max_width : str_length;
-                printf("buffer='%s', length = %d\n", buffer, str_length);
+                // printf("buffer='%s', length = %d\n", buffer, str_length);
                 break;
             default:
                 fprintf(stderr, "Cable ERR: get_max_col_width() unsupported data type '%c'\n", data_type);
                 return -1;
         }
     }
-    printf("found max width: %zd\n\n", (ssize_t)max_width);
+    // printf("found max width: %zd\n\n", (ssize_t)max_width);
     return (ssize_t)max_width;
 }
 
@@ -62,17 +66,27 @@ static ssize_t get_data_type_size(char data_type)
 // todo: add left / right alignment.
 static int print_table_cell(int width, char data_type, const void *value)
 {
-    // todo set precision if value should to be truncated
+    static char cell_string_buffer[MAX_COLUMN_WIDTH + 1];
+    snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "");
+
+    int length = 0;
     switch (data_type)
     {
         case 'd':
-            return printf("%*d", width, *(int *)value);
-            // printf("%-.*d", width, *(int *)value);
+            length = snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "%d", *(int *)value);
+            break;
+        case 's':
+            length = snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "%s", (const char *)value);
             break;
         default:
             fprintf(stderr, "Cable ERR: print_table_cell() unsupported data type '%c'\n", data_type);
             return -1;
     }
+    if (length >= MAX_COLUMN_WIDTH + 1)
+        return printf("%.*s", MAX_COLUMN_WIDTH, cell_string_buffer);
+    if (width > MAX_COLUMN_WIDTH)
+        return printf("%*s", MAX_COLUMN_WIDTH, cell_string_buffer);
+    return printf("%*s", width, cell_string_buffer);
 }
 
 /// c - number of columns.
@@ -116,10 +130,15 @@ int print_table( //
         max_width = max_width >= (size_t)data_max_width ? max_width : data_max_width;
         column_widths[i] = max_width;
     }
+    // for (size_t i = 0; i < c; i++)
+    // printf("|%*s", (int)column_widths[i], headers[i]);
     for (size_t i = 0; i < c; i++)
-        printf("|%*s", (int)column_widths[i], headers[i]);
+    {
+        putchar('|');
+        print_table_cell((int)column_widths[i], 's', headers[i]);
+    }
     printf("|\n");
-    
+
     for (size_t row = 0; row < r; row++)
     {
         for (size_t col = 0; col < c; col++)
@@ -143,4 +162,4 @@ int print_table( //
     return 0;
 }
 
-#endif // CABLE_Hsize_t c,
+#endif // CABLE_H

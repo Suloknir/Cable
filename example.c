@@ -23,7 +23,7 @@ int main(void)
     data[1] = (void *)weights;
     data[2] = (void *)random;
     print_table(columns, rows, headers, "ddd", data) && handle_error();
-    // printf("int: |%*d|\n", 7, 2193);
+    // printf("int: |%.*d|\n", 2, 2193);
     // printf("float: |%3.*f|\n", 3, 2193.231732f);
     // printf("string: |%*s|\n", 7, "das");
     // printf("string truncated: |%.*s|\n", 2, "das");
