@@ -1,9 +1,10 @@
 #include "Cable.h"
+#include <stddef.h>
 #include <stdio.h>
 
 int main(void)
 {
-    const char *headers[] = {"sizes", "weight"};
+    char * const headers[] = {"sizes", "weight"};
     const size_t columns = sizeof(headers) / sizeof(*headers);
 
     const int sizes[] = {10, 100, 1000, 10000};
@@ -19,5 +20,7 @@ int main(void)
         fprintf(stderr, "ERR: print_table returned with %d\n", ret);
         return 1;
     }
+    // printf("test: |%.*d|\n", 7, 2193);
+    // printf("test: |%*s|\n", 2, "das");
     return 0;
 }
