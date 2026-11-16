@@ -104,7 +104,7 @@ int print_table( //
         ssize_t data_max_width = get_max_col_width(r, data_format[i], data[i]);
         if (data_max_width < 0)
         {
-            fprintf(stderr, "Cable ERR: get_max_col_width returned with %zd\n", data_max_width);
+            fprintf(stderr, "Cable ERR: get_max_col_width() returned with %zd\n", data_max_width);
             free(column_widths);
             return EXIT_FAILURE;
         }
@@ -118,7 +118,14 @@ int print_table( //
         for (size_t i = 0; i < c; i++)
         {
             const void *current_column = data[i];
-            ptrdiff_t row_offset = (ptrdiff_t)j * get_data_type_size(data_format[i]);
+            const ssize_t data_type_size = get_data_type_size(data_format[i]);
+            if (data_type_size < 0)
+            {
+                fprintf(stderr, "Cable ERR: get_data_type_size() returned with %zd\n", data_type_size);
+                free(column_widths);
+                return EXIT_FAILURE;
+            }
+            ptrdiff_t row_offset = (ptrdiff_t)j * data_type_size;
             // printf("j: %zu, i: %zu, row_offset: %td\n", j, i, row_offset);
             const void *current_value = &((unsigned char *)current_column)[row_offset];
             putchar('|');
