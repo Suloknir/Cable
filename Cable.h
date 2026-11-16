@@ -66,25 +66,25 @@ static int print_table_cell(int width, char data_type, const void *value)
     switch (data_type)
     {
         case 'd':
-            printf("%*d", width, *(int *)value);
+            return printf("%*d", width, *(int *)value);
             // printf("%-.*d", width, *(int *)value);
             break;
         default:
             fprintf(stderr, "Cable ERR: print_table_cell() unsupported data type '%c'\n", data_type);
             return -1;
     }
-    return 0;
 }
 
 /// c - number of columns.
 /// r - number of rows.
 /// headers - array of strings that will be printed on the top of the table.
-/// data_format - string that tells the function what datatypes have arrays stored
+/// data_format - string that tells the function what datatypes are stored
 /// inside of the 'data'.
-/// data_format can be build as a combination of the following chars:
+/// data_format can be build as a combination of the following characters:
 /// d - int,
 /// f - float, //todo
 /// e.g: "dff" means that data points to 3 arrays of type (int[], float[], float[]).
+/// returns 0 on succes
 int print_table( //
     size_t c,
     size_t r,
@@ -92,6 +92,11 @@ int print_table( //
     const char data_format[c],
     void *const *data)
 {
+    if (strlen(data_format) != c)
+    {
+        fprintf(stderr, "Cable ERR: data_format length != number of columns\n");
+        return EXIT_FAILURE;
+    }
     size_t *column_widths = malloc(c * sizeof(size_t));
     if (column_widths == NULL)
     {
@@ -113,28 +118,25 @@ int print_table( //
     }
     // todo: print headers
 
-    for (size_t j = 0; j < r; j++)
+    for (size_t row = 0; row < r; row++)
     {
-        for (size_t i = 0; i < c; i++)
+        for (size_t col = 0; col < c; col++)
         {
-            const void *current_column = data[i];
-            const ssize_t data_type_size = get_data_type_size(data_format[i]);
+            const void *current_column = data[col];
+            const ssize_t data_type_size = get_data_type_size(data_format[col]);
             if (data_type_size < 0)
             {
                 fprintf(stderr, "Cable ERR: get_data_type_size() returned with %zd\n", data_type_size);
                 free(column_widths);
                 return EXIT_FAILURE;
             }
-            ptrdiff_t row_offset = (ptrdiff_t)j * data_type_size;
-            // printf("j: %zu, i: %zu, row_offset: %td\n", j, i, row_offset);
+            ptrdiff_t row_offset = (ptrdiff_t)row * data_type_size;
             const void *current_value = &((unsigned char *)current_column)[row_offset];
             putchar('|');
-            print_table_cell((int)column_widths[i], data_format[i], current_value);
-            putchar('|');
+            print_table_cell((int)column_widths[col], data_format[col], current_value);
         }
-        putchar('\n');
+        printf("|\n");
     }
-
     free(column_widths);
     return 0;
 }
