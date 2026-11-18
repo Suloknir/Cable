@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define CABLE_MAX_COLUMN_WIDTH 30
 #define CABLE_IMPLEMENTATION
 #include "Cable.h"
 

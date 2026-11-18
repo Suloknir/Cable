@@ -8,8 +8,6 @@
 // todo: create macro for debugging that allows to show/hide error and/or warn messages
 //  (maybe one macro for errors and one macro for warnings)
 
-#define MAX_COLUMN_WIDTH 128
-
 #include <stddef.h>
 
 /// c - number of columns.
@@ -29,6 +27,10 @@ int print_table(size_t c, size_t r, char *const headers[c], const char data_form
 #ifdef CABLE_IMPLEMENTATION
 #undef CABLE_IMPLEMENTATION
 
+#ifndef CABLE_MAX_COLUMN_WIDTH
+#define CABLE_MAX_COLUMN_WIDTH 128
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +39,8 @@ int print_table(size_t c, size_t r, char *const headers[c], const char data_form
 // on error returns value < 0
 static ssize_t cable_get_max_col_width(size_t n, char data_type, const void *column_data)
 {
-    static char buffer[MAX_COLUMN_WIDTH + 1];
+    static char buffer[CABLE_MAX_COLUMN_WIDTH + 1
+];
     size_t max_width = 0;
     for (size_t i = 0; i < n; i++)
     {
@@ -45,12 +48,16 @@ static ssize_t cable_get_max_col_width(size_t n, char data_type, const void *col
         switch (data_type)
         {
             case 'd':
-                str_length = snprintf(buffer, MAX_COLUMN_WIDTH + 1, "%d", ((int *)column_data)[i]);
-                if (str_length >= MAX_COLUMN_WIDTH)
+                str_length = snprintf(buffer, CABLE_MAX_COLUMN_WIDTH + 1
+                , "%d", ((int *)column_data)[i]);
+                if (str_length >= CABLE_MAX_COLUMN_WIDTH)
                 {
+                
                     fprintf(
-                        stderr, "Cable WARN: Data in row %zu exceeds max column width = %d\n", i + 1, MAX_COLUMN_WIDTH);
-                    // str_length = MAX_COLUMN_WIDTH - 1;
+                        stderr, "Cable WARN: Data in row %zu exceeds max column width = %d\n", i + 1, CABLE_MAX_COLUMN_WIDTH);
+                    //
+                    // str_length = CABLE_MAX_COLUMN_WIDTH - 1
+                    //;
                 }
                 max_width = max_width >= (size_t)str_length ? max_width : str_length;
                 // printf("buffer='%s', length = %d\n", buffer, str_length);
@@ -82,35 +89,38 @@ static ssize_t cable_get_data_type_size(char data_type)
 // todo: add left / right alignment.
 static int cable_print_table_cell(int width, char data_type, const void *value)
 {
-    static char cell_string_buffer[MAX_COLUMN_WIDTH + 1];
-    snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "");
+    static char cell_string_buffer[CABLE_MAX_COLUMN_WIDTH + 1
+];
+    snprintf(cell_string_buffer, CABLE_MAX_COLUMN_WIDTH + 1
+    , "");
 
     int length = 0;
     switch (data_type)
     {
         case 'd':
-            length = snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "%d", *(int *)value);
+            length = snprintf(cell_string_buffer, CABLE_MAX_COLUMN_WIDTH + 1
+            , "%d", *(int *)value);
             break;
         case 's':
-            length = snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "%s", (const char *)value);
+            length = snprintf(cell_string_buffer, CABLE_MAX_COLUMN_WIDTH + 1
+            , "%s", (const char *)value);
             break;
         default:
             fprintf(stderr, "Cable ERR: print_table_cell() unsupported data type '%c'\n", data_type);
             return -1;
     }
-    if (length >= MAX_COLUMN_WIDTH + 1)
-        return printf("%.*s", MAX_COLUMN_WIDTH, cell_string_buffer);
-    if (width > MAX_COLUMN_WIDTH)
-        return printf("%*s", MAX_COLUMN_WIDTH, cell_string_buffer);
+    if (length >= CABLE_MAX_COLUMN_WIDTH + 1
+)
+        return printf("%.*s", CABLE_MAX_COLUMN_WIDTH, cell_string_buffer
+);
+    if (width > CABLE_MAX_COLUMN_WIDTH)
+        return
+ printf("%*s", CABLE_MAX_COLUMN_WIDTH, cell_string_buffer
+);
     return printf("%*s", width, cell_string_buffer);
 }
 
-int print_table( //
-    size_t c,
-    size_t r,
-    char *const headers[c],
-    const char data_format[c],
-    void *const *data)
+int print_table(size_t c, size_t r, char *const headers[c], const char data_format[c], void *const *data)
 {
     if (strlen(data_format) != c)
     {
@@ -137,9 +147,11 @@ int print_table( //
         column_widths[i] = max_width;
     }
     for (size_t i = 0; i < c; i++)
-        if (strlen(headers[i]) > MAX_COLUMN_WIDTH)
-            fprintf(stderr, "Cable WARN: Header '%s' exceeds max column width = %d\n", headers[i], MAX_COLUMN_WIDTH);
-    for (size_t i = 0; i < c; i++)
+        if (strlen(headers[i]) > CABLE_MAX_COLUMN_WIDTH)
+            fprintf
+    (stderr, "Cable WARN: Header '%s' exceeds max column width = %d\n", headers[i], CABLE_MAX_COLUMN_WIDTH);
+    for
+ (size_t i = 0; i < c; i++)
     {
         putchar('|');
         cable_print_table_cell((int)column_widths[i], 's', headers[i]);
