@@ -1,6 +1,8 @@
-#include "Cable.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#define CABLE_IMPLEMENTATION
+#include "Cable.h"
 
 int handle_error(void)
 {
@@ -10,7 +12,7 @@ int handle_error(void)
 
 int main(void)
 {
-    char * const headers[] = {"sizes", "weight", "some very long header"};
+    char *const headers[] = {"sizes", "weight", "some very long header"};
     const size_t columns = sizeof(headers) / sizeof(*headers);
 
     const int sizes[] = {10, 100, 1000, 10000};
