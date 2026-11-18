@@ -8,16 +8,34 @@
 // todo: create macro for debugging that allows to show/hide error and/or warn messages
 //  (maybe one macro for errors and one macro for warnings)
 
-#define MAX_COLUMN_WIDTH 12
+#define MAX_COLUMN_WIDTH 128
 
 #include <stddef.h>
+
+/// c - number of columns.
+/// r - number of rows.
+/// headers - array of strings that will be printed on the top of the table.
+/// data_format - string that tells the function what datatypes are stored
+/// inside of the 'data'.
+/// data_format can be build as a combination of the following characters:
+/// d - int,
+/// f - float, //todo
+/// e.g: "dff" means that data points to 3 arrays of type (int[], float[], float[]).
+/// returns 0 on succes
+int print_table(size_t c, size_t r, char *const headers[c], const char data_format[c], void *const *data);
+
+#endif // CABLE_H
+
+#ifdef CABLE_IMPLEMENTATION
+#undef CABLE_IMPLEMENTATION
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
 // on error returns value < 0
-static ssize_t get_max_col_width(size_t n, char data_type, const void *data)
+static ssize_t cable_get_max_col_width(size_t n, char data_type, const void *column_data)
 {
     static char buffer[MAX_COLUMN_WIDTH + 1];
     size_t max_width = 0;
@@ -27,13 +45,11 @@ static ssize_t get_max_col_width(size_t n, char data_type, const void *data)
         switch (data_type)
         {
             case 'd':
-                str_length = snprintf(buffer, MAX_COLUMN_WIDTH + 1, "%d", ((int *)data)[i]);
+                str_length = snprintf(buffer, MAX_COLUMN_WIDTH + 1, "%d", ((int *)column_data)[i]);
                 if (str_length >= MAX_COLUMN_WIDTH)
                 {
-                    fprintf(stderr,
-                        "Cable WARN: Data in row %zu exceeded max column width = %d\n",
-                        i + 1,
-                        MAX_COLUMN_WIDTH);
+                    fprintf(
+                        stderr, "Cable WARN: Data in row %zu exceeds max column width = %d\n", i + 1, MAX_COLUMN_WIDTH);
                     // str_length = MAX_COLUMN_WIDTH - 1;
                 }
                 max_width = max_width >= (size_t)str_length ? max_width : str_length;
@@ -49,7 +65,7 @@ static ssize_t get_max_col_width(size_t n, char data_type, const void *data)
 }
 
 // on error returns value < 0
-static ssize_t get_data_type_size(char data_type)
+static ssize_t cable_get_data_type_size(char data_type)
 {
     switch (data_type)
     {
@@ -64,7 +80,7 @@ static ssize_t get_data_type_size(char data_type)
 
 // todo: add precision and proper width for floats
 // todo: add left / right alignment.
-static int print_table_cell(int width, char data_type, const void *value)
+static int cable_print_table_cell(int width, char data_type, const void *value)
 {
     static char cell_string_buffer[MAX_COLUMN_WIDTH + 1];
     snprintf(cell_string_buffer, MAX_COLUMN_WIDTH + 1, "");
@@ -89,16 +105,6 @@ static int print_table_cell(int width, char data_type, const void *value)
     return printf("%*s", width, cell_string_buffer);
 }
 
-/// c - number of columns.
-/// r - number of rows.
-/// headers - array of strings that will be printed on the top of the table.
-/// data_format - string that tells the function what datatypes are stored
-/// inside of the 'data'.
-/// data_format can be build as a combination of the following characters:
-/// d - int,
-/// f - float, //todo
-/// e.g: "dff" means that data points to 3 arrays of type (int[], float[], float[]).
-/// returns 0 on succes
 int print_table( //
     size_t c,
     size_t r,
@@ -120,7 +126,7 @@ int print_table( //
     for (size_t i = 0; i < c; i++)
     {
         size_t max_width = strlen(headers[i]);
-        ssize_t data_max_width = get_max_col_width(r, data_format[i], data[i]);
+        ssize_t data_max_width = cable_get_max_col_width(r, data_format[i], data[i]);
         if (data_max_width < 0)
         {
             fprintf(stderr, "Cable ERR: get_max_col_width() returned with %zd\n", data_max_width);
@@ -136,7 +142,7 @@ int print_table( //
     for (size_t i = 0; i < c; i++)
     {
         putchar('|');
-        print_table_cell((int)column_widths[i], 's', headers[i]);
+        cable_print_table_cell((int)column_widths[i], 's', headers[i]);
     }
     printf("|\n");
 
@@ -145,7 +151,7 @@ int print_table( //
         for (size_t col = 0; col < c; col++)
         {
             const void *current_column = data[col];
-            const ssize_t data_type_size = get_data_type_size(data_format[col]);
+            const ssize_t data_type_size = cable_get_data_type_size(data_format[col]);
             if (data_type_size < 0)
             {
                 fprintf(stderr, "Cable ERR: get_data_type_size() returned with %zd\n", data_type_size);
@@ -155,7 +161,7 @@ int print_table( //
             ptrdiff_t row_offset = (ptrdiff_t)row * data_type_size;
             const void *current_value = &((unsigned char *)current_column)[row_offset];
             putchar('|');
-            print_table_cell((int)column_widths[col], data_format[col], current_value);
+            cable_print_table_cell((int)column_widths[col], data_format[col], current_value);
         }
         printf("|\n");
     }
@@ -163,4 +169,4 @@ int print_table( //
     return 0;
 }
 
-#endif // CABLE_H
+#endif // CABLE_IMPLEMENTATION
